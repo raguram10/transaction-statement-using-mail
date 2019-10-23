@@ -1,0 +1,228 @@
+import java.util.*;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.search.*;
+
+public class finalgithub
+{
+    private int tanscno=0,debitcount=0,creditcount=0,promo=0,wheredebit=0,wherecredit=0;
+    private float debitamount=0,creditamount=0,startingbalance=0,endingbalance=0;
+    private String from = getFrom();
+    private String password = getPassword();
+    Scanner scanner=new Scanner(System.in);
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String from) {
+        this.from =from;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password =password;
+    }
+
+    public static void main(String[] args)
+    {
+        new finalgithub().connect();
+
+    }
+
+    private void connect()
+    {
+        try {
+            System.out.println("Enter your Email id         :");
+            from=scanner.nextLine();
+            System.out.println("Enter your Email id password :");
+            password=scanner.nextLine();
+            setFrom(from);
+            setPassword(password);
+            String host = "imap.gmail.com";
+            Properties prop = new Properties();
+            prop.put("mail.imap.host", host);
+            prop.put("mail.imap.port", 993);
+            prop.put("mail.imap.ssl.enable", true);
+
+            Session session = Session.getInstance(prop);
+            Store store = session.getStore("imap");
+            store.connect(host,getFrom(),getPassword());
+            Folder checkingmail=store.getFolder("INBOX");
+            checkingmail.open(Folder.READ_WRITE);
+            SearchTerm searchteam=new FromTerm(new InternetAddress("KVB-no.reply@kvbmail.com"));
+            SearchTerm beforedate=new ReceivedDateTerm(ComparisonTerm.GT,new Date(119,9,1));
+            SearchTerm afterdate=new ReceivedDateTerm(ComparisonTerm.LT,new Date(119,10,1));
+            SearchTerm intersearch= new AndTerm(afterdate,beforedate);
+            SearchTerm finalsearch= new AndTerm(searchteam,intersearch);
+            Message[] message = checkingmail.search(finalsearch);
+            int length = message.length;
+            System.out.println(length);
+            for (int i = 0; i < length; i++) {
+                Message temp = message[i];
+                System.out.println("          ");
+                System.out.println(temp.getSentDate());
+                String content=String.valueOf(temp.getContent());
+                find(content);
+            }
+            print();
+            checkingmail.close();
+            store.close();
+        }
+        catch (Exception ex)
+        {
+            ex.printStackTrace();
+        }
+
+    }
+    private void find(String content)
+    {
+        String debited="Debited";
+        String debited1="debited";
+        String credited="Credited";
+        String credited1="credited";
+        String balance="Avl Bal is INR";
+        if (content.contains(debited)||content.contains(debited1)) {
+            if(content.contains("INR")) {
+                wheredebit = content.indexOf("INR");
+                wheredebit += 4;
+            }
+            else
+            {
+                wheredebit=content.indexOf("RS");
+                wheredebit += 3;
+
+            }
+            int flag=0,index=0;
+            for(int i=wheredebit;i<content.length();i++) {
+                if (content.charAt(i) >= 44 && content.charAt(i) <= 57)
+                {
+                    if (content.charAt(i) >= 48 && content.charAt(i) <= 57||content.charAt(i) == 44)
+                    {
+                        index=i;
+
+                    }
+                    else if (content.charAt(i) == 46)
+                    {
+                        if (flag == 0) {
+                            flag=1;
+                            index=i;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+
+            }
+            float temp = Float.parseFloat((content.substring(wheredebit,index)).replace(",",""));
+            if(content.contains(balance)) {
+                if (tanscno == 0) {
+                    int wherebala = content.indexOf(balance);
+                    wherebala += balance.length() + 1;
+                    content=content.replaceAll("[a-zA-Z<.]"," ");
+                    startingbalance = Float.parseFloat(content.substring(wherebala, (wherebala + (content.substring(wherebala).indexOf(" ")))).replace(",", ""));
+                    startingbalance+=temp;
+                } else {
+                    int wherebala = content.indexOf(balance);
+                    wherebala += balance.length() + 1;
+                    content=content.replaceAll("[a-zA-Z<.]"," ");
+                    endingbalance = Float.parseFloat(content.substring(wherebala, (wherebala + (content.substring(wherebala).indexOf(" ")))).replace(",", ""));
+                }
+            }
+            debitamount+=temp;
+            debitcount++;
+            tanscno++;
+        }
+        else if(content.contains(credited)||content.contains(credited1))
+        {
+            if (content.contains("INR")) {
+                wherecredit = content.indexOf("INR");
+                wherecredit += 4;
+
+            }
+            else
+            {
+                wherecredit=content.indexOf("RS");
+                wherecredit += 3;
+            }
+            int flag=0,index=0;
+            for(int i=wheredebit;i<content.length();i++) {
+                if (content.charAt(i) >= 44 && content.charAt(i) <= 57)
+                {
+                    if (content.charAt(i) >= 48 && content.charAt(i) <= 57||content.charAt(i) == 44)
+                    {
+                        index=i;
+
+                    }
+                    else if (content.charAt(i) == 46)
+                    {
+                        if (flag == 0) {
+                            flag=1;
+                            index=i;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+
+            }
+            float tempc= Float.parseFloat((content.substring(wherecredit,index)).replace(",",""));
+            if(content.contains(balance)) {
+                if (tanscno == 0) {
+                    int wherebala = content.indexOf(balance);
+                    wherebala += balance.length() + 1;
+                    content=content.replaceAll("[a-zA-Z<.]"," ");
+                    startingbalance = Float.parseFloat(content.substring(wherebala, (wherebala + (content.substring(wherebala).indexOf(" ")))).replace(",", ""));
+                    startingbalance-=tempc;
+                } else {
+                    int wherebala = content.indexOf(balance);
+                    wherebala += balance.length() + 1;
+                    content=content.replaceAll("[a-zA-Z<.]"," ");
+                    endingbalance = Float.parseFloat(content.substring(wherebala, (wherebala + (content.substring(wherebala).indexOf(" ")))).replace(",", ""));
+                }
+            }
+            creditamount+=tempc;
+            tanscno++;
+            creditcount++;
+        }
+        else
+        {
+            promo++;
+        }
+
+    }
+    private void print()
+    {
+        System.out.println("Total NO of transaction in the given time period                :"+tanscno);
+        System.out.println("Total NO of times DEBITED from account in the time period       :"+debitcount);
+        System.out.println("Total amount DEBITED from account in the time period            :"+debitamount);
+        System.out.println("Total NO of times CREDITED into account in the time period      :"+creditcount);
+        System.out.println("Total amount credited into account in the time period           :"+creditamount);
+        System.out.println("Staring balance                                                 :"+startingbalance);
+        System.out.println("Ending balance                                                  :"+endingbalance);
+        System.out.println("NETBALANCE OVER THE TIME PERIOD                                 :"+(startingbalance-endingbalance));
+        System.out.println("Total NO of Promotional maills received during that time Period :"+promo);
+    }
+
+}
+
